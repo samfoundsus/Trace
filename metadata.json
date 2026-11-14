@@ -1,0 +1,10 @@
+{
+  "name": "Trace",
+  "description": "Overlay gallery images semi-transparently over a live camera feed with outline mode, grid, and gesture controls for hand tracing on paper.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

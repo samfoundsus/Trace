@@ -1,0 +1,172 @@
+<resources>
+    <string name="app_name">Trace</string>
+
+    <!-- Home Screen -->
+    <string name="home_title">Trace</string>
+    <string name="home_choose_image">Choose image</string>
+    <string name="home_projects_section">Projects</string>
+    <string name="home_recent_section">Recent</string>
+    <string name="home_empty_state">Picked images appear here</string>
+    <string name="cd_recent_image">Recent trace image</string>
+    <string name="cd_project_image">Saved project image</string>
+    <string name="cd_more_options">More options</string>
+    <string name="home_menu_choose_image">Choose image</string>
+    <string name="home_menu_settings">Settings</string>
+
+    <!-- Project Context Menu & Dialogs -->
+    <string name="project_menu_rename">Rename</string>
+    <string name="project_menu_duplicate">Duplicate</string>
+    <string name="project_menu_delete">Delete</string>
+    <string name="project_default_name">Untitled %1$d</string>
+    <string name="project_copy_suffix">%1$s (copy)</string>
+    <string name="dialog_save_project_title">Save project</string>
+    <string name="dialog_rename_project_title">Rename project</string>
+    <string name="dialog_project_name_label">Project name</string>
+    <string name="dialog_delete_project_title">Delete project?</string>
+    <string name="dialog_delete_project_message">This will permanently remove "%1$s" from your device.</string>
+    <string name="dialog_save">Save</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_delete">Delete</string>
+    <string name="dialog_clear">Clear</string>
+
+    <!-- Camera Permission Screen -->
+    <string name="permission_title">Camera access</string>
+    <string name="permission_explanation">Trace uses the camera to show your paper beneath the selected image while you draw.</string>
+    <string name="permission_allow">Allow</string>
+    <string name="permission_open_settings">Open settings</string>
+
+    <!-- Trace Screen Controls & Hint -->
+    <string name="cd_back">Back</string>
+    <string name="cd_hide_controls">Hide controls</string>
+    <string name="cd_show_controls">Show controls</string>
+    <string name="trace_locked_pill">Locked</string>
+    <string name="cd_unlock">Tap to unlock controls</string>
+    <string name="trace_first_run_hint">Pinch to zoom, twist to rotate. Lock when you\'re ready to draw.</string>
+
+    <!-- Time-lapse Recording UI & Notification -->
+    <string name="trace_recording_pill">Recording %1$s</string>
+    <string name="cd_stop_recording">Tap to stop recording</string>
+    <string name="cd_stop_timelapse">Stop time-lapse</string>
+    <string name="sheet_timelapse_title">Time-lapse</string>
+    <string name="sheet_timelapse_interval_info">Captures one frame every %1$d s · 30 fps MP4 (%2$s)</string>
+    <string name="sheet_timelapse_interval_1s_result">1 hour of drawing becomes about 2 minutes of video</string>
+    <string name="sheet_timelapse_interval_2s_result">1 hour of drawing becomes about 1 minute of video</string>
+    <string name="sheet_timelapse_interval_5s_result">1 hour of drawing becomes about 24 seconds of video</string>
+    <string name="sheet_timelapse_interval_10s_result">1 hour of drawing becomes about 12 seconds of video</string>
+    <string name="sheet_timelapse_include_overlay_supporting">Off records only the paper and your drawing</string>
+    <string name="sheet_timelapse_countdown_label">Countdown before start</string>
+    <string name="sheet_timelapse_countdown_off">Off</string>
+    <string name="cd_cancel_countdown">Tap to cancel countdown</string>
+    <string name="sheet_timelapse_start">Start</string>
+    <string name="sheet_timelapse_stop">Stop</string>
+    <string name="snackbar_timelapse_saved">Time-lapse saved</string>
+    <string name="snackbar_timelapse_open">Open</string>
+    <string name="notif_channel_timelapse">Time-lapse recording</string>
+    <string name="notif_timelapse_title">Trace is recording a time-lapse</string>
+    <string name="notif_timelapse_text">Recording (%1$s) · Every %2$d s</string>
+    <string name="notif_action_stop">Stop</string>
+
+    <!-- Pinned Mode (ARCore) -->
+    <string name="more_pin_to_surface">Pin to surface</string>
+    <string name="more_pin_to_surface_supporting">Anchor the image onto your paper with AR</string>
+    <string name="more_pin_active_supporting">Image is pinned · Adjust paper width or re-pin</string>
+    <string name="more_timelapse_pinned_unavailable">Not available in pinned mode</string>
+    <string name="sheet_pin_title">Pin to surface</string>
+    <string name="sheet_pin_paper_width">Paper width</string>
+    <string name="sheet_pin_paper_width_value">%1$d cm</string>
+    <string name="sheet_pin_repin">Re-pin</string>
+    <string name="sheet_pin_repin_supporting">Tap your paper again to place the image</string>
+    <string name="sheet_pin_back_to_normal">Back to normal</string>
+    <string name="sheet_pin_back_to_normal_supporting">Return to standard camera overlay mode</string>
+    <string name="trace_pin_move_slowly_pill">Move the phone slowly over your paper</string>
+    <string name="trace_pin_tap_to_anchor_pill">Tap your paper to pin the image</string>
+    <string name="trace_pin_tracking_lost_pill">Tracking lost, move the phone slowly</string>
+    <string name="snackbar_ar_unavailable">Couldn\'t start pinned mode</string>
+    <string name="snackbar_low_storage">Not enough storage space available</string>
+    <string name="snackbar_image_load_error">Couldn\'t load the selected image</string>
+
+    <!-- Floating Bottom Toolbar -->
+    <string name="toolbar_opacity">Opacity</string>
+    <string name="toolbar_lock">Lock</string>
+    <string name="toolbar_outline">Outline</string>
+    <string name="toolbar_more">More</string>
+
+    <!-- Opacity Sheet -->
+    <string name="sheet_opacity_title">Image opacity</string>
+    <string name="sheet_opacity_value">%1$d%%</string>
+
+    <!-- Outline Sheet -->
+    <string name="sheet_outline_title">Outline</string>
+    <string name="sheet_outline_toggle">Convert to line art</string>
+    <string name="sheet_outline_toggle_supporting">Show detected edges on a transparent background</string>
+    <string name="sheet_outline_strength">Edge strength</string>
+    <string name="sheet_outline_strength_value">%1$d%%</string>
+
+    <!-- More Sheet -->
+    <string name="sheet_more_title">More options</string>
+    <string name="more_timelapse">Time-lapse</string>
+    <string name="more_timelapse_supporting">Record your drawing session into a short video</string>
+    <string name="more_save_project">Save project</string>
+    <string name="more_save_project_supporting">Save image, position, outline, and grid settings</string>
+    <string name="more_flashlight">Flashlight</string>
+    <string name="more_flashlight_supporting">Illuminate the paper beneath the phone</string>
+    <string name="more_flip_horizontal">Flip horizontal</string>
+    <string name="more_flip_horizontal_supporting">Mirror the image left to right</string>
+    <string name="more_flip_vertical">Flip vertical</string>
+    <string name="more_flip_vertical_supporting">Mirror the image top to bottom</string>
+    <string name="more_grid">Alignment grid</string>
+    <string name="more_grid_supporting">Overlay thin reference lines across the screen</string>
+    <string name="more_grid_size">Cell size</string>
+    <string name="more_grid_size_value">%1$d dp</string>
+    <string name="more_reset_position">Reset position</string>
+    <string name="more_reset_position_supporting">Restore default center, scale, and rotation</string>
+    <string name="more_change_image">Change image</string>
+    <string name="more_change_image_supporting">Pick another image from your library</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_dynamic_color">Dynamic colour</string>
+    <string name="settings_dynamic_color_supporting">Use colours from your wallpaper</string>
+
+    <string name="settings_section_trace">Trace</string>
+    <string name="settings_keep_screen_on">Keep screen on</string>
+    <string name="settings_keep_screen_on_supporting">Prevent the display from sleeping while tracing</string>
+    <string name="settings_default_opacity">Default opacity</string>
+    <string name="settings_default_opacity_supporting">Starting image opacity for new traces (%1$d%%)</string>
+    <string name="settings_hide_controls_on_start">Hide controls on start</string>
+    <string name="settings_hide_controls_on_start_supporting">Open the trace screen with toolbars hidden</string>
+
+    <string name="settings_section_timelapse">Time-lapse</string>
+    <string name="settings_timelapse_interval">Interval</string>
+    <string name="settings_timelapse_interval_value">%1$d s</string>
+    <string name="settings_timelapse_quality">Quality</string>
+    <string name="settings_timelapse_quality_720p">720p</string>
+    <string name="settings_timelapse_quality_1080p">1080p</string>
+    <string name="settings_timelapse_include_overlay">Include overlay image</string>
+    <string name="settings_timelapse_include_overlay_supporting">Composite the semi-transparent trace image into the video</string>
+
+    <string name="settings_section_data">Data</string>
+    <string name="settings_clear_recent">Clear recent images</string>
+    <string name="settings_clear_recent_supporting">Remove all thumbnails from the Recent section</string>
+    <string name="settings_delete_all_projects">Delete all projects</string>
+    <string name="settings_delete_all_projects_supporting">Permanently remove all saved trace projects</string>
+
+    <string name="settings_section_about">About</string>
+    <string name="settings_about_description">Camera overlay and AR drawing assistant for tracing onto paper</string>
+    <string name="settings_about_version">Version</string>
+    <string name="settings_about_build">Build</string>
+    <string name="settings_about_commit">Commit</string>
+    <string name="settings_app_version">App version</string>
+    <string name="settings_app_version_format">%1$s (%2$d)</string>
+
+    <!-- Settings Confirmation Dialogs -->
+    <string name="dialog_clear_recent_title">Clear recent images?</string>
+    <string name="dialog_clear_recent_message">All recent image thumbnails will be removed. Saved projects will not be affected.</string>
+    <string name="dialog_delete_all_projects_title">Delete all projects?</string>
+    <string name="dialog_delete_all_projects_message">All saved projects and their settings will be permanently deleted.</string>
+</resources>

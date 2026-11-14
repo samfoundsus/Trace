@@ -1,0 +1,20 @@
+# Baseline profile rules for Trace
+# Covers startup, Home grid, Trace camera/gesture overlay, Outline edge processor,
+# Time-lapse encoder, and Jetpack Compose / Material 3 / Navigation hot paths.
+
+HSPLcom/example/MainActivity;-><init>()V
+HSPLcom/example/MainActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLcom/example/ui/**;->*
+HSPLcom/example/data/**;->*
+HSPLcom/example/domain/**;->*
+HSPLcom/example/service/**;->*
+Lcom/example/**;
+
+# Jetpack Compose Runtime, UI, Foundation, Animation, Material 3 & Navigation
+HSPLandroidx/compose/runtime/**;->*
+HSPLandroidx/compose/ui/**;->*
+HSPLandroidx/compose/foundation/**;->*
+HSPLandroidx/compose/animation/**;->*
+HSPLandroidx/compose/material3/**;->*
+HSPLandroidx/navigation/**;->*
+HSPLandroidx/lifecycle/**;->*

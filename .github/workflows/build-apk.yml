@@ -1,0 +1,272 @@
+name: Build and Release Signed APK
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Version bump before building (none, patch, minor, major)'
+        required: false
+        default: 'none'
+        type: choice
+        options:
+          - none
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    # Skip builds triggered by the workflow's own version-bump commit to avoid infinite loops.
+    if: >
+      github.event_name != 'push' ||
+      (!startsWith(github.event.head_commit.message, 'chore: bump version to ') &&
+       github.actor != 'github-actions[bot]')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump version in version.properties (manual release_type)
+        if: >-
+          github.event_name == 'workflow_dispatch' &&
+          inputs.release_type != '' &&
+          inputs.release_type != 'none'
+        env:
+          RELEASE_TYPE: ${{ inputs.release_type }}
+        run: |
+          MAJOR=$(grep '^VERSION_MAJOR=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          MINOR=$(grep '^VERSION_MINOR=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          PATCH=$(grep '^VERSION_PATCH=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          OFFSET=$(grep '^VERSION_CODE_OFFSET=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
+
+          case "$RELEASE_TYPE" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+            *)
+              echo "::error::Unsupported release_type: $RELEASE_TYPE"
+              exit 1
+              ;;
+          esac
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          sed -i "s/^VERSION_MAJOR=.*/VERSION_MAJOR=${MAJOR}/" version.properties
+          sed -i "s/^VERSION_MINOR=.*/VERSION_MINOR=${MINOR}/" version.properties
+          sed -i "s/^VERSION_PATCH=.*/VERSION_PATCH=${PATCH}/" version.properties
+          sed -i "s/^VERSION_CODE_OFFSET=.*/VERSION_CODE_OFFSET=${OFFSET}/" version.properties
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add version.properties
+          git commit -m "chore: bump version to ${NEW_VERSION}"
+          git push origin HEAD:main
+
+      - name: Resolve version and build metadata
+        id: meta
+        run: |
+          MAJOR=$(grep '^VERSION_MAJOR=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          MINOR=$(grep '^VERSION_MINOR=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          PATCH=$(grep '^VERSION_PATCH=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          OFFSET=$(grep '^VERSION_CODE_OFFSET=' version.properties | cut -d'=' -f2 | tr -d '[:space:]')
+
+          SEMVER="${MAJOR}.${MINOR}.${PATCH}"
+          BUILD_NUMBER="${{ github.run_number }}"
+          VERSION_CODE=$((BUILD_NUMBER + OFFSET))
+          VERSION_NAME="${SEMVER} (build ${BUILD_NUMBER})"
+          GIT_COMMIT=$(git rev-parse --short=7 HEAD)
+          RELEASE_TAG="v${SEMVER}-b${BUILD_NUMBER}"
+          RELEASE_TITLE="Trace ${VERSION_NAME}"
+          APK_FILENAME="trace-${SEMVER}-b${BUILD_NUMBER}.apk"
+          DEBUG_APK_FILENAME="trace-${SEMVER}-b${BUILD_NUMBER}-debug.apk"
+          CHECKSUM_FILENAME="${APK_FILENAME}.sha256"
+
+          echo "semver=${SEMVER}" >> "$GITHUB_OUTPUT"
+          echo "build_number=${BUILD_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
+          echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
+          echo "git_commit=${GIT_COMMIT}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "release_title=${RELEASE_TITLE}" >> "$GITHUB_OUTPUT"
+          echo "apk_filename=${APK_FILENAME}" >> "$GITHUB_OUTPUT"
+          echo "debug_apk_filename=${DEBUG_APK_FILENAME}" >> "$GITHUB_OUTPUT"
+          echo "checksum_filename=${CHECKSUM_FILENAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run unit tests
+        run: |
+          ./gradlew testDebugUnitTest \
+            -PbuildNumber="${{ steps.meta.outputs.build_number }}" \
+            -PgitCommit="${{ steps.meta.outputs.git_commit }}"
+
+      # Non-main branch pushes and Pull Requests: build debug APK and upload artifact (no release)
+      - name: Assemble debug APK (PR / non-main branch)
+        if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
+        run: |
+          ./gradlew assembleDebug \
+            -PbuildNumber="${{ steps.meta.outputs.build_number }}" \
+            -PgitCommit="${{ steps.meta.outputs.git_commit }}"
+          APK_SOURCE=$(find app/build/outputs/apk/debug -name "*.apk" | head -n 1)
+          if [ -z "$APK_SOURCE" ]; then
+            echo "::error::Debug APK was not found in app/build/outputs/apk/debug."
+            exit 1
+          fi
+          cp "$APK_SOURCE" "${{ steps.meta.outputs.debug_apk_filename }}"
+
+      - name: Upload debug APK build artifact (PR / non-main branch)
+        if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.debug_apk_filename }}
+          path: ${{ steps.meta.outputs.debug_apk_filename }}
+          if-no-files-found: error
+
+      # Main branch pushes and workflow_dispatch on main: sign release APK, upload artifact, publish GitHub Release
+      - name: Decode release signing keystore
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::error::Missing required signing secrets (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD)."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "${RUNNER_TEMP}/release-signing.jks"
+          # Ensure the keystore contains the "upload" alias expected by the release signingConfig
+          if [ "$KEY_ALIAS" != "upload" ]; then
+            keytool -changealias \
+              -keystore "${RUNNER_TEMP}/release-signing.jks" \
+              -storepass "$KEYSTORE_PASSWORD" \
+              -alias "$KEY_ALIAS" \
+              -destalias "upload" \
+              -keypass "$KEY_PASSWORD" || true
+          fi
+
+      - name: Assemble signed release APK
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/release-signing.jks
+          STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease \
+            -PbuildNumber="${{ steps.meta.outputs.build_number }}" \
+            -PgitCommit="${{ steps.meta.outputs.git_commit }}"
+          APK_SOURCE=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -z "$APK_SOURCE" ]; then
+            echo "::error::Signed release APK was not found in app/build/outputs/apk/release."
+            exit 1
+          fi
+          cp "$APK_SOURCE" "${{ steps.meta.outputs.apk_filename }}"
+          sha256sum "${{ steps.meta.outputs.apk_filename }}" > "${{ steps.meta.outputs.checksum_filename }}"
+
+      - name: Remove temporary signing keystore
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/release-signing.jks"
+
+      - name: Upload APK build artifact
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.apk_filename }}
+          path: |
+            ${{ steps.meta.outputs.apk_filename }}
+            ${{ steps.meta.outputs.checksum_filename }}
+          if-no-files-found: error
+
+      - name: Generate grouped release notes from commit messages
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            RANGE="${PREV_TAG}..HEAD"
+          else
+            RANGE="HEAD"
+          fi
+
+          COMMITS=$(git log --no-merges --pretty=format:"%s (%h)" $RANGE)
+
+          FEAT=$(echo "$COMMITS" | grep -E -i '^feat(\([^)]+\))?:' || true)
+          FIX=$(echo "$COMMITS" | grep -E -i '^fix(\([^)]+\))?:' || true)
+          PERF=$(echo "$COMMITS" | grep -E -i '^perf(\([^)]+\))?:' || true)
+          UI=$(echo "$COMMITS" | grep -E -i '^ui(\([^)]+\))?:' || true)
+          CHORE=$(echo "$COMMITS" | grep -E -i '^chore(\([^)]+\))?:' || true)
+          OTHER=$(echo "$COMMITS" | grep -E -v -i '^(feat|fix|perf|ui|chore)(\([^)]+\))?:' || true)
+
+          NOTES_FILE="${RUNNER_TEMP}/release_notes.md"
+          : > "$NOTES_FILE"
+
+          append_group() {
+            local title="$1"
+            local lines="$2"
+            if [ -n "$lines" ]; then
+              echo "### ${title}" >> "$NOTES_FILE"
+              echo "$lines" | sed 's/^/- /' >> "$NOTES_FILE"
+              echo "" >> "$NOTES_FILE"
+            fi
+          }
+
+          append_group "Features (feat)" "$FEAT"
+          append_group "Fixes (fix)" "$FIX"
+          append_group "Performance (perf)" "$PERF"
+          append_group "UI & Motion (ui)" "$UI"
+          append_group "Maintenance (chore)" "$CHORE"
+          append_group "Other Changes" "$OTHER"
+
+          if [ ! -s "$NOTES_FILE" ]; then
+            echo "- Release ${{ steps.meta.outputs.version_name }} (${{ steps.meta.outputs.git_commit }})" >> "$NOTES_FILE"
+            echo "" >> "$NOTES_FILE"
+          fi
+
+          echo "### SHA-256 Checksum" >> "$NOTES_FILE"
+          echo '```text' >> "$NOTES_FILE"
+          cat "${{ steps.meta.outputs.checksum_filename }}" >> "$NOTES_FILE"
+          echo '```' >> "$NOTES_FILE"
+
+      - name: Publish GitHub Release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.release_tag }}
+          name: ${{ steps.meta.outputs.release_title }}
+          body_path: ${{ runner.temp }}/release_notes.md
+          generate_release_notes: false
+          files: |
+            ${{ steps.meta.outputs.apk_filename }}
+            ${{ steps.meta.outputs.checksum_filename }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

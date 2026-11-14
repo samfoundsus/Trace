@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Monochrome silhouette: same 45-degree pencil with a 1.5dp gap between body and tip -->
+    <group
+        android:pivotX="54"
+        android:pivotY="50"
+        android:rotation="45">
+
+        <!-- Pencil body: x 47..61, y 26..52.5 (1.5dp gap above y = 54 tip base) -->
+        <path
+            android:fillColor="#000000"
+            android:pathData="M47,52.5 L47,31 A5,5 0 0,1 52,26 L56,26 A5,5 0 0,1 61,31 L61,52.5 Z" />
+
+        <!-- Pencil tip: triangle from (47, 54) and (61, 54) to (54, 68) with 1.5dp rounded point -->
+        <path
+            android:fillColor="#000000"
+            android:pathData="M47,54 L61,54 L55.34,65.32 A1.5,1.5 0 0,1 52.66,65.32 Z" />
+    </group>
+
+    <!-- Underline: rounded bar from x 36..68, y 68..72, fully round ends -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M38,68 L66,68 A2,2 0 0,1 66,72 L38,72 A2,2 0 0,1 38,68 Z" />
+</vector>
