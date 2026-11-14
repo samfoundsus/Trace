@@ -20,11 +20,13 @@
 
 ## Building
 
-### Local Debug Build & Unit Tests
+No signing keys, keystore files, or GitHub secrets are needed to build or release the app—release builds are minified and shrunk with R8 and signed automatically with the default debug signing config.
+Because the auto-generated debug signing key differs per build environment, updates cannot install directly over an older build; uninstall the previous build first and use the in-app backup to keep your projects.
 
 ```bash
-./gradlew assembleDebug
-./gradlew testDebugUnitTest
+gradle assembleDebug
+gradle assembleRelease
+gradle testDebugUnitTest
 ```
 
 ## Versioning and releases
@@ -50,39 +52,14 @@ VERSION_CODE_OFFSET=100
 ### How to Cut a Release
 
 1. **Automatic Release on Push to `main`**:
-   - Pushing or merging a pull request to `main` runs `./gradlew testDebugUnitTest`, builds the signed, R8-minified release APK (`trace-<MAJOR.MINOR.PATCH>-b<run_number>.apk`), generates a SHA-256 checksum file (`.apk.sha256`), and publishes a GitHub Release tagged `v<MAJOR.MINOR.PATCH>-b<run_number>` titled `Trace <versionName>`.
+   - Pushing or merging a pull request to `main` runs `gradle testDebugUnitTest`, builds the R8-minified release APK (`trace-<MAJOR.MINOR.PATCH>-b<run_number>.apk`), generates a SHA-256 checksum file (`.apk.sha256`), and publishes a GitHub Release tagged `v<MAJOR.MINOR.PATCH>-b<run_number>` titled `Trace <versionName>`.
    - Release notes are automatically generated from commit messages since the previous release tag and grouped by prefix (`feat`, `fix`, `perf`, `ui`, `chore`).
    - Pull requests and pushes to any branch other than `main` run unit tests and upload a debug APK artifact without creating a release.
 2. **Manual Version Bump via GitHub Actions (`workflow_dispatch`)**:
-   - Open **Actions → Build and Release Signed APK → Run workflow** on `main`.
+   - Open **Actions → Build and Release APK → Run workflow** on `main`.
    - Choose **`release_type`**:
      - `none` — Build and release the current version in `version.properties`.
      - `patch` — Increment `VERSION_PATCH` (e.g. `1.1.0` → `1.1.1`).
      - `minor` — Increment `VERSION_MINOR` and reset `VERSION_PATCH=0` (e.g. `1.1.0` → `1.2.0`).
      - `major` — Increment `VERSION_MAJOR` and reset `VERSION_MINOR=0, VERSION_PATCH=0` (e.g. `1.1.0` → `2.0.0`).
    - When `patch`, `minor`, or `major` is selected, the workflow updates `version.properties`, commits it back to `main` as `chore: bump version to X.Y.Z`, and immediately builds and publishes the new release.
-
-### Signing Setup & Installing an Update Over an Older Build
-
-Android only allows installing a newer APK directly over an existing installation (preserving all saved projects and settings) when **both** conditions hold:
-
-1. The new APK is signed with the **exact same release keystore** (`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD` in **Settings → Secrets and variables → Actions**).
-2. The new APK has a **`versionCode` greater than or equal to** the installed build (guaranteed automatically by `github.run_number + VERSION_CODE_OFFSET`).
-
-To create and configure the release keystore for GitHub Actions:
-
-```bash
-keytool -genkeypair -v \
-  -keystore my-upload-key.jks \
-  -keyalg RSA \
-  -keysize 2048 \
-  -validity 10000 \
-  -alias upload
-
-base64 -w 0 my-upload-key.jks > keystore.b64
-```
-
-To install a new release APK over an older build on your phone without losing data:
-
-- Download `trace-<MAJOR.MINOR.PATCH>-b<run_number>.apk` from the latest GitHub Release and open it on your device to upgrade in place, or install via ADB with `adb install -r trace-<MAJOR.MINOR.PATCH>-b<run_number>.apk`.
-- If switching between a local debug build (signed with `debug.keystore`) and a CI release build (signed with your release key), uninstall the debug build once before installing the signed release APK; all subsequent CI release builds will update seamlessly in place.

@@ -68,16 +68,7 @@ android {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
-  // Do not remove or modify these signingConfigs. They are necessary for building, installing,
-  // and updating Android apps in AI Studio.
   signingConfigs {
-    create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
-    }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
       storePassword = "android"
@@ -92,14 +83,17 @@ android {
       isMinifyEnabled = true
       isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      // Do not remove or modify this signingConfig assignment. It is necessary for Android apps in
-      // AI Studio.
-      signingConfig = signingConfigs.getByName("release")
+      signingConfig = signingConfigs.getByName("debug")
     }
     debug {
       // Do not remove or modify this signingConfig assignment. It is necessary for Android apps in
       // AI Studio.
-      signingConfig = signingConfigs.getByName("debugConfig")
+      signingConfig =
+        if (file("${rootDir}/debug.keystore").exists()) {
+          signingConfigs.getByName("debugConfig")
+        } else {
+          signingConfigs.getByName("debug")
+        }
     }
   }
   compileOptions {
@@ -122,26 +116,6 @@ composeCompiler {
   @Suppress("DEPRECATION")
   enableStrongSkippingMode = true
   includeSourceInformation = true
-}
-
-// Fail release builds with a clear message if release signing credentials or keystore are missing.
-gradle.taskGraph.whenReady {
-  val isReleaseSigningRequested = allTasks.any {
-    it.name.contains("validateSigningRelease", ignoreCase = true) ||
-      it.name.contains("packageRelease", ignoreCase = true)
-  }
-  if (isReleaseSigningRequested) {
-    val releaseConfig = android.signingConfigs.getByName("release")
-    val ksFile = releaseConfig.storeFile
-    val hasStorePass = !releaseConfig.storePassword.isNullOrBlank()
-    val hasKeyPass = !releaseConfig.keyPassword.isNullOrBlank()
-    if (ksFile == null || !ksFile.exists() || !hasStorePass || !hasKeyPass) {
-      throw GradleException(
-        "Release signing configuration is incomplete. Ensure KEYSTORE_PATH (pointing to an existing .jks file), " +
-          "STORE_PASSWORD, and KEY_PASSWORD environment variables are set before running assembleRelease."
-      )
-    }
-  }
 }
 
 // Configure the Secrets Gradle Plugin to use .env and .env.example files

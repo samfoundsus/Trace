@@ -1,4 +1,4 @@
-name: Build and Release Signed APK
+name: Build and Release APK
 
 on:
   push:
@@ -150,52 +150,20 @@ jobs:
           path: ${{ steps.meta.outputs.debug_apk_filename }}
           if-no-files-found: error
 
-      # Main branch pushes and workflow_dispatch on main: sign release APK, upload artifact, publish GitHub Release
-      - name: Decode release signing keystore
+      # Main branch pushes and workflow_dispatch on main: build release APK, upload artifact, publish GitHub Release
+      - name: Assemble release APK
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
-            echo "::error::Missing required signing secrets (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD)."
-            exit 1
-          fi
-          echo "$KEYSTORE_BASE64" | base64 --decode > "${RUNNER_TEMP}/release-signing.jks"
-          # Ensure the keystore contains the "upload" alias expected by the release signingConfig
-          if [ "$KEY_ALIAS" != "upload" ]; then
-            keytool -changealias \
-              -keystore "${RUNNER_TEMP}/release-signing.jks" \
-              -storepass "$KEYSTORE_PASSWORD" \
-              -alias "$KEY_ALIAS" \
-              -destalias "upload" \
-              -keypass "$KEY_PASSWORD" || true
-          fi
-
-      - name: Assemble signed release APK
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        env:
-          KEYSTORE_PATH: ${{ runner.temp }}/release-signing.jks
-          STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           gradle assembleRelease \
             -PbuildNumber="${{ steps.meta.outputs.build_number }}" \
             -PgitCommit="${{ steps.meta.outputs.git_commit }}"
           APK_SOURCE=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
           if [ -z "$APK_SOURCE" ]; then
-            echo "::error::Signed release APK was not found in app/build/outputs/apk/release."
+            echo "::error::Release APK was not found in app/build/outputs/apk/release."
             exit 1
           fi
           cp "$APK_SOURCE" "${{ steps.meta.outputs.apk_filename }}"
           sha256sum "${{ steps.meta.outputs.apk_filename }}" > "${{ steps.meta.outputs.checksum_filename }}"
-
-      - name: Remove temporary signing keystore
-        if: always()
-        run: rm -f "${RUNNER_TEMP}/release-signing.jks"
 
       - name: Upload APK build artifact
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
