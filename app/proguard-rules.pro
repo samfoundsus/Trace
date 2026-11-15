@@ -30,7 +30,6 @@
 -keep class androidx.concurrent.futures.** { *; }
 
 # ARCore (JNI & reflection entry points required for Pinned Mode)
--keepparamnames
 -keep class com.google.ar.core.** { *; }
 -keep @com.google.ar.core.annotations.UsedByNative class *
 -keepclassmembers class * {
