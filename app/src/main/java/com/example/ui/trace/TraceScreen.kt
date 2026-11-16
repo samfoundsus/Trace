@@ -1053,7 +1053,7 @@ fun TraceScreen(
             tonalElevation = 0.dp,
             modifier = Modifier
                 .padding(horizontal = 24.dp)
-                .widthIn(min = 280.dp, max = 400.dp)
+                .widthIn(min = 280.dp, max = 560.dp)
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
